@@ -4,15 +4,12 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
-import trimesh
 from pathlib import Path
-from datetime import datetime
 import pickle
-import os
 import unicodedata
 
 try:
-    from pybaseball import playerid_lookup, statcast_batter, statcast_pitcher, team_batting, team_pitching, batting_stats
+    from pybaseball import statcast_batter, statcast_pitcher, team_batting, team_pitching, batting_stats
     PYBASEBALL_AVAILABLE = True
 except ImportError:
     PYBASEBALL_AVAILABLE = False
