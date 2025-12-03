@@ -1,0 +1,9 @@
+dash==2.14.2
+dash-bootstrap-components==1.5.0
+plotly==5.18.0
+pandas==2.1.4
+numpy==1.26.2
+trimesh==4.0.8
+pybaseball==2.2.7
+scipy==1.11.4
+gunicorn==21.2.0
