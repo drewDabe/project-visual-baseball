@@ -118,7 +118,20 @@ def get_player_hit_data(player_id, year=2025, use_cache=True):
             print(f"Fetching Statcast data for player {player_id}...")
             data = statcast_batter(start_date, end_date, player_id)
             
+            print(f"  Data type: {type(data)}")
+            print(f"  Data is None: {data is None}")
+            if data is not None:
+                print(f"  Data empty: {data.empty}")
+                print(f"  Data shape: {data.shape}")
+                print(f"  Columns: {list(data.columns)[:10]}...")  # first 10 cols
+            
             if data is not None and not data.empty:
+                # check if events column exists
+                if 'events' not in data.columns:
+                    print(f"  ERROR: No 'events' column found in data!")
+                    print(f"  Available columns: {list(data.columns)}")
+                    return None
+                
                 relevant_events = ['single', 'double', 'triple', 'home_run']
                 filtered_data = data[data['events'].isin(relevant_events)].copy()
                 
@@ -154,7 +167,7 @@ def get_player_hit_data(player_id, year=2025, use_cache=True):
                                 corrected_count += 1
                 
                 if corrected_count > 0:
-                    print(f"  Corrected {corrected_count} HR coordinate outliers (>5% error)")
+                    print(f"  Corrected {corrected_count} HR coordinate outliers (>5%)")
                 
                 print(f"  Caching {len(cols_to_keep)} columns (was 118)")
                 
