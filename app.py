@@ -899,6 +899,10 @@ app.layout = dbc.Container([
     ], className="mb-4")
 ], fluid=True, style={'backgroundColor': '#1a1a1a', 'minHeight': '100vh', 'padding': '20px'})
 
+# hidden components for delayed loading
+app.layout.children.append(dcc.Store(id='trigger-comparison', data=0))
+app.layout.children.append(dcc.Interval(id='comparison-delay', interval=50, max_intervals=1, disabled=True))
+
 # cache team stats at startup to avoid slow API calls
 _team_batting_cache = None
 _team_pitching_cache = None
@@ -1254,21 +1258,21 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
     return options, 0, {'display': 'block', 'marginTop': '5px'}
 
 @app.callback(
-    Output('main-visualization', 'figure'),
+    [Output('main-visualization', 'figure'),
+     Output('comparison-delay', 'disabled')],
     [Input('player-table', 'selected_rows'),
      Input('player-type-radio', 'value'),
      Input('hit-type-checklist', 'value'),
      Input('pitch-range-selector', 'value')],
-    [State('player-table', 'data')],
-    priority=0
+    [State('player-table', 'data')]
 )
 def update_visualization(selected_rows, player_type, hit_types, pitch_range_start, table_data):
     if not selected_rows or not table_data:
         # Return empty field or strike zone
         if player_type == 'hitters':
-            return create_3d_baseball_field()
+            return create_3d_baseball_field(), True
         else:
-            return create_strike_zone()
+            return create_strike_zone(), True
     
     selected_player = table_data[selected_rows[0]]
     player_name = selected_player.get('Name', 'Unknown')
@@ -1335,7 +1339,7 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                             color=hit_colors[event_type],
                             hit_type=event_type.upper().replace('HOME_RUN', 'HR').replace('_', '')
                         )
-        return fig
+        return fig, False  # enable comparison delay
     else:
         fig = create_strike_zone()
         
@@ -1370,9 +1374,17 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                     fig = add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, None)
                     fig.data[-1].showlegend = showlegend
         
-        return fig
+        return fig, False  # enable comparison delay
 
 
+
+@app.callback(
+    Output('trigger-comparison', 'data'),
+    [Input('comparison-delay', 'n_intervals')],
+    prevent_initial_call=True
+)
+def trigger_comparison_update(n):
+    return (n or 0) + 1
 
 @app.callback(
     [Output('comparison-vs-team', 'children'),
@@ -1381,12 +1393,12 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
      Output('comparison-loading', 'style'),
      Output('comparison-content', 'style'),
      Output('comparison-title', 'children')],
-    [Input('player-table', 'selected_rows'),
-     Input('player-type-radio', 'value')],
-    [State('player-table', 'data')],
-    priority=1
+    [Input('trigger-comparison', 'data')],
+    [State('player-table', 'selected_rows'),
+     State('player-type-radio', 'value'),
+     State('player-table', 'data')]
 )
-def update_comparative_analysis(selected_rows, player_type, table_data):
+def update_comparative_analysis(trigger, selected_rows, player_type, table_data):
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
         return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
