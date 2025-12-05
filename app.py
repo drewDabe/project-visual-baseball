@@ -901,7 +901,7 @@ app.layout = dbc.Container([
 
 # hidden components for delayed comparative analysis loading
 app.layout.children.append(dcc.Store(id='trigger-comparison', data=0))
-app.layout.children.append(dcc.Interval(id='comparison-delay', interval=50, max_intervals=1, disabled=True))
+app.layout.children.append(dcc.Interval(id='comparison-delay', interval=50, disabled=True))
 
 # cache team stats at startup to avoid slow API calls
 _team_batting_cache = None
@@ -1390,7 +1390,8 @@ def trigger_comparison_update(n):
      Output('bimonthly-splits', 'children'),
      Output('comparison-loading', 'style'),
      Output('comparison-content', 'style'),
-     Output('comparison-title', 'children')],
+     Output('comparison-title', 'children'),
+     Output('comparison-delay', 'n_intervals')],
     [Input('trigger-comparison', 'data')],
     [State('player-table', 'selected_rows'),
      State('player-type-radio', 'value'),
@@ -1400,11 +1401,11 @@ def trigger_comparison_update(n):
 def update_comparative_analysis(trigger, selected_rows, player_type, table_data):
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis", 0
     
     if selected_rows[0] >= len(table_data):
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis", 0
     
     selected_row = table_data[selected_rows[0]]
     player_name = selected_row['Name']
@@ -1505,7 +1506,7 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
         ], style={'backgroundColor': '#2d2d2d'})
         
         empty_msg = html.P("Bi-monthly splits not available for pitchers", className="text-center text-muted")
-        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}"
+        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}", 0
     
     if player_type != 'hitters':
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
@@ -1593,7 +1594,7 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
     
     return (comparison_table, html.Div(), splits_table, 
             {'display': 'none'}, {'display': 'block'}, 
-            f"Comparative Analysis - {player_name}")
+            f"Comparative Analysis - {player_name}", 0)
 
 server = app.server
 
