@@ -1259,20 +1259,23 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
 
 @app.callback(
     [Output('main-visualization', 'figure'),
-     Output('comparison-delay', 'disabled')],
+     Output('comparison-delay', 'disabled'),
+     Output('comparison-loading', 'style', allow_duplicate=True),
+     Output('comparison-content', 'style', allow_duplicate=True)],
     [Input('player-table', 'selected_rows'),
      Input('player-type-radio', 'value'),
      Input('hit-type-checklist', 'value'),
      Input('pitch-range-selector', 'value')],
-    [State('player-table', 'data')]
+    [State('player-table', 'data')],
+    prevent_initial_call='initial_duplicate'
 )
 def update_visualization(selected_rows, player_type, hit_types, pitch_range_start, table_data):
     if not selected_rows or not table_data:
         # Return empty field or strike zone
         if player_type == 'hitters':
-            return create_3d_baseball_field(), True
+            return create_3d_baseball_field(), True, {'display': 'none'}, {'display': 'block'}
         else:
-            return create_strike_zone(), True
+            return create_strike_zone(), True, {'display': 'none'}, {'display': 'block'}
     
     selected_player = table_data[selected_rows[0]]
     player_name = selected_player.get('Name', 'Unknown')
@@ -1339,7 +1342,7 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                             color=hit_colors[event_type],
                             hit_type=event_type.upper().replace('HOME_RUN', 'HR').replace('_', '')
                         )
-        return fig, False  # enable comparison delay
+        return fig, False, {'display': 'block'}, {'display': 'none'}  # show loading, enable comparison delay
     else:
         fig = create_strike_zone()
         
@@ -1374,7 +1377,7 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                     fig = add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, None)
                     fig.data[-1].showlegend = showlegend
         
-        return fig, False  # enable comparison delay
+        return fig, False, {'display': 'block'}, {'display': 'none'}  # show loading, enable comparison delay
 
 
 
