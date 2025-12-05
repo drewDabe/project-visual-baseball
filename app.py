@@ -1261,7 +1261,8 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
     [Output('main-visualization', 'figure'),
      Output('comparison-delay', 'disabled'),
      Output('comparison-loading', 'style', allow_duplicate=True),
-     Output('comparison-content', 'style', allow_duplicate=True)],
+     Output('comparison-content', 'style', allow_duplicate=True),
+     Output('comparison-delay', 'max_intervals', allow_duplicate=True)],
     [Input('player-table', 'selected_rows'),
      Input('player-type-radio', 'value'),
      Input('hit-type-checklist', 'value'),
@@ -1273,9 +1274,9 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
     if not selected_rows or not table_data:
         # Return empty field or strike zone
         if player_type == 'hitters':
-            return create_3d_baseball_field(), True, {'display': 'none'}, {'display': 'block'}
+            return create_3d_baseball_field(), True, {'display': 'none'}, {'display': 'block'}, 1
         else:
-            return create_strike_zone(), True, {'display': 'none'}, {'display': 'block'}
+            return create_strike_zone(), True, {'display': 'none'}, {'display': 'block'}, 1
     
     selected_player = table_data[selected_rows[0]]
     player_name = selected_player.get('Name', 'Unknown')
@@ -1342,7 +1343,7 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                             color=hit_colors[event_type],
                             hit_type=event_type.upper().replace('HOME_RUN', 'HR').replace('_', '')
                         )
-        return fig, False, {'display': 'block'}, {'display': 'none'}  # show loading, enable comparison delay
+        return fig, False, {'display': 'block'}, {'display': 'none'}, -1  # show loading, enable comparison delay, reset counter
     else:
         fig = create_strike_zone()
         
@@ -1377,17 +1378,23 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                     fig = add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, None)
                     fig.data[-1].showlegend = showlegend
         
-        return fig, False, {'display': 'block'}, {'display': 'none'}  # show loading, enable comparison delay
+        return fig, False, {'display': 'block'}, {'display': 'none'}, -1  # show loading, enable comparison delay, reset counter
 
 
 
 @app.callback(
     Output('trigger-comparison', 'data'),
     [Input('comparison-delay', 'n_intervals')],
+    [State('player-table', 'selected_rows'),
+     State('player-type-radio', 'value'),
+     State('player-table', 'data')],
     prevent_initial_call=True
 )
-def trigger_comparison_update(n):
-    return (n or 0) + 1
+def trigger_comparison_update(n, selected_rows, player_type, table_data):
+    # Pass current selection info to trigger comparison callback
+    if not selected_rows or not table_data:
+        return {'rows': None, 'type': player_type}
+    return {'rows': selected_rows, 'type': player_type, 'data': table_data[selected_rows[0]] if selected_rows[0] < len(table_data) else None}
 
 @app.callback(
     [Output('comparison-vs-team', 'children'),
@@ -1395,22 +1402,18 @@ def trigger_comparison_update(n):
      Output('bimonthly-splits', 'children'),
      Output('comparison-loading', 'style'),
      Output('comparison-content', 'style'),
-     Output('comparison-title', 'children')],
+     Output('comparison-title', 'children'),
+     Output('comparison-delay', 'max_intervals')],
     [Input('trigger-comparison', 'data')],
-    [State('player-table', 'selected_rows'),
-     State('player-type-radio', 'value'),
-     State('player-table', 'data')]
+    prevent_initial_call=True
 )
-def update_comparative_analysis(trigger, selected_rows, player_type, table_data):
-    if not selected_rows or not table_data:
+def update_comparative_analysis(trigger):
+    if not trigger or not trigger.get('data'):
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis", 1
     
-    if selected_rows[0] >= len(table_data):
-        empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
-    
-    selected_row = table_data[selected_rows[0]]
+    selected_row = trigger['data']
+    player_type = trigger['type']
     player_name = selected_row['Name']
     
     if player_type == 'pitchers':
@@ -1509,7 +1512,7 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
         ], style={'backgroundColor': '#2d2d2d'})
         
         empty_msg = html.P("Bi-monthly splits not available for pitchers", className="text-center text-muted")
-        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}"
+        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}", 1  # reset max_intervals
     
     if player_type != 'hitters':
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
@@ -1597,7 +1600,7 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
     
     return (comparison_table, html.Div(), splits_table, 
             {'display': 'none'}, {'display': 'block'}, 
-            f"Comparative Analysis - {player_name}")
+            f"Comparative Analysis - {player_name}", 1)  # reset max_intervals
 
 server = app.server
 
