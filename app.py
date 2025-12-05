@@ -176,7 +176,10 @@ def get_player_hit_data(player_id, year=2025, use_cache=True):
                         pickle.dump(filtered_data, f)
                     return filtered_data
         except Exception as e:
+            import traceback
             print(f"Error fetching data for player {player_id}: {e}")
+            print(f"Full traceback:")
+            traceback.print_exc()
     
     return None
 
