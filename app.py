@@ -119,6 +119,11 @@ def get_player_hit_data(player_id, year=2025, use_cache=True):
             data = statcast_batter(start_date, end_date, player_id)
             
             if data is not None and not data.empty:
+                # check if events column exists
+                if 'events' not in data.columns:
+                    print(f"  No 'events' column found - player may have no Statcast data for {year}")
+                    return None
+                
                 relevant_events = ['single', 'double', 'triple', 'home_run']
                 filtered_data = data[data['events'].isin(relevant_events)].copy()
                 
