@@ -1259,7 +1259,9 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
 
 @app.callback(
     [Output('main-visualization', 'figure'),
-     Output('comparison-delay', 'disabled')],
+     Output('comparison-delay', 'disabled'),
+     Output('comparison-loading', 'style'),
+     Output('comparison-content', 'style')],
     [Input('player-table', 'selected_rows'),
      Input('player-type-radio', 'value'),
      Input('hit-type-checklist', 'value'),
@@ -1270,9 +1272,9 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
     if not selected_rows or not table_data:
         # Return empty field or strike zone
         if player_type == 'hitters':
-            return create_3d_baseball_field(), True
+            return create_3d_baseball_field(), True, {'display': 'none'}, {'display': 'block'}
         else:
-            return create_strike_zone(), True
+            return create_strike_zone(), True, {'display': 'none'}, {'display': 'block'}
     
     selected_player = table_data[selected_rows[0]]
     player_name = selected_player.get('Name', 'Unknown')
@@ -1374,7 +1376,7 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
                     fig = add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, None)
                     fig.data[-1].showlegend = showlegend
         
-        return fig, False
+        return fig, False, {'display': 'block'}, {'display': 'none'}
 
 @app.callback(
     Output('trigger-comparison', 'data'),
@@ -1388,8 +1390,6 @@ def trigger_comparison_update(n):
     [Output('comparison-vs-team', 'children'),
      Output('comparison-vs-league', 'children'),
      Output('bimonthly-splits', 'children'),
-     Output('comparison-loading', 'style'),
-     Output('comparison-content', 'style'),
      Output('comparison-title', 'children'),
      Output('comparison-delay', 'n_intervals')],
     [Input('trigger-comparison', 'data')],
@@ -1401,11 +1401,11 @@ def trigger_comparison_update(n):
 def update_comparative_analysis(trigger, selected_rows, player_type, table_data):
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
     
     if selected_rows[0] >= len(table_data):
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
     
     selected_row = table_data[selected_rows[0]]
     player_name = selected_row['Name']
@@ -1510,15 +1510,15 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
     
     if player_type != 'hitters':
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
     
     if not PYBASEBALL_AVAILABLE:
         error_msg = html.P("PyBaseball not available", className="text-center text-muted")
-        return error_msg, error_msg, error_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return error_msg, error_msg, error_msg, "Comparative Analysis", 0
     
     if selected_rows[0] >= len(table_data):
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
+        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
     
     selected_row = table_data[selected_rows[0]]
     player_name = selected_row['Name']
@@ -1593,7 +1593,6 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
     ], style={'backgroundColor': '#2d2d2d'})
     
     return (comparison_table, html.Div(), splits_table, 
-            {'display': 'none'}, {'display': 'block'}, 
             f"Comparative Analysis - {player_name}", 0)
 
 server = app.server
