@@ -1357,10 +1357,10 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
      Output('comparison-content', 'style'),
      Output('comparison-title', 'children')],
     [Input('player-table', 'selected_rows'),
-     Input('player-table', 'data'),
-     Input('player-type-radio', 'value')]
+     Input('player-type-radio', 'value')],
+    [State('player-table', 'data')]
 )
-def update_comparative_analysis(selected_rows, table_data, player_type):
+def update_comparative_analysis(selected_rows, player_type, table_data):
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
         return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
