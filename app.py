@@ -394,7 +394,6 @@ def create_strike_zone():
     return fig
 
 def add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, color):
-    """Add a single pitch to the strike zone"""
     PITCH_COLORS = {
         'FF': '#FF4444',
         'SI': '#FF6B6B',
@@ -448,7 +447,6 @@ def add_pitch_to_zone(fig, plate_x, plate_z, pitch_type, speed, description, col
     return fig
 
 def add_hit_to_field(fig, hc_x, hc_y, launch_angle, launch_speed, distance, description, color='red', hit_type='HR'):
-    """Add a single hit trajectory to the field with physics-based landing height"""
     p1 = np.array([0, 0, 1])
     
     #physics for expected distance
@@ -1104,7 +1102,6 @@ def create_comparison_table(player_stats, team_stats, league_stats):
     )
 
 def create_bimonthly_splits_table(periods_data):
-    """Create condensed table for bi-monthly splits"""
     stats_to_show = ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']
     period_names = ['Apr + May', 'Jun + Jul', 'Aug + Sep']
     
@@ -1141,7 +1138,6 @@ def create_bimonthly_splits_table(periods_data):
      Input('player-table', 'sort_by')]
 )
 def update_table(player_type, search_query, sort_by):
-    """Update table based on player type and search query"""
     df = hitters_df.copy() if player_type == 'hitters' else pitchers_df.copy()
     
     if df.empty:
@@ -1169,7 +1165,6 @@ def update_table(player_type, search_query, sort_by):
     prevent_initial_call=True
 )
 def cache_page_players(page_current, player_type, table_data):
-    """Queue players on current page for background caching"""
     if player_type == 'hitters' and table_data:
         page_size = 20
         start_idx = page_current * page_size
@@ -1237,7 +1232,6 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
     [State('player-table', 'data')]
 )
 def update_visualization(selected_rows, player_type, hit_types, pitch_range_start, table_data):
-    """Update the main visualization based on selected player"""
     if not selected_rows or not table_data:
         # Return empty field or strike zone
         if player_type == 'hitters':
@@ -1361,6 +1355,10 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
     [State('player-table', 'data')]
 )
 def update_comparative_analysis(selected_rows, player_type, table_data):
+    # TEMPORARILY DISABLED FOR TESTING
+    empty_msg = html.P("Comparative analysis temporarily disabled for testing", className="text-center text-muted")
+    return empty_msg, empty_msg, empty_msg, {'display': 'none'}, {'display': 'block'}, "Comparative Analysis (Disabled)"
+    
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
         return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
