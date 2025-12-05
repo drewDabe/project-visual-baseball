@@ -1506,7 +1506,7 @@ def update_comparative_analysis(trigger, selected_rows, player_type, table_data)
         ], style={'backgroundColor': '#2d2d2d'})
         
         empty_msg = html.P("Bi-monthly splits not available for pitchers", className="text-center text-muted")
-        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}", 0
+        return pitcher_comparison, html.Div(), empty_msg, f"Pitcher Analysis - {player_name}", 0
     
     if player_type != 'hitters':
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
