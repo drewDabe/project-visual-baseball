@@ -98,6 +98,51 @@ def plot_curve(x_start, y_start, z_start, x_end, y_end, z_end, pfx_x, pfx_z, pit
     
     return x_curve, y_curve, z_curve
 
+# Team data caching functions
+def get_cached_team_batting(year=2025):
+    """Load team batting data from cache, or fetch if not available"""
+    cache_dir = Path('cache')
+    cache_file = cache_dir / f'team_batting_{year}.pkl'
+    
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'rb') as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Error loading team batting cache: {e}")
+    
+    # Fallback to API if cache doesn't exist
+    if PYBASEBALL_AVAILABLE:
+        try:
+            print(f"Fetching team batting data from API...")
+            return team_batting(year)
+        except Exception as e:
+            print(f"Error fetching team batting: {e}")
+    
+    return None
+
+def get_cached_team_pitching(year=2025):
+    """Load team pitching data from cache, or fetch if not available"""
+    cache_dir = Path('cache')
+    cache_file = cache_dir / f'team_pitching_{year}.pkl'
+    
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'rb') as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Error loading team pitching cache: {e}")
+    
+    # Fallback to API if cache doesn't exist
+    if PYBASEBALL_AVAILABLE:
+        try:
+            print(f"Fetching team pitching data from API...")
+            return team_pitching(year)
+        except Exception as e:
+            print(f"Error fetching team pitching: {e}")
+    
+    return None
+
 def get_player_hit_data(player_id, year=2025, use_cache=True):
     cache_dir = Path('cache')
     cache_dir.mkdir(exist_ok=True)
@@ -902,7 +947,9 @@ app.layout = dbc.Container([
 def get_league_averages():
     # Calculate league averages from all teams
     try:
-        all_teams = team_batting(2025, stat_columns=STAT_COLS)
+        all_teams = get_cached_team_batting(2025)
+        if all_teams is None or all_teams.empty:
+            return None
         return {
             'AVG': all_teams['AVG'].mean(),
             'OPS': all_teams['OPS'].mean(),
@@ -924,7 +971,9 @@ def get_team_averages(team_abbr):
         
         pybaseball_abbr = TEAM_ABBR_MAP.get(team_abbr, team_abbr)
         
-        all_teams = team_batting(2025, stat_columns=STAT_COLS)
+        all_teams = get_cached_team_batting(2025)
+        if all_teams is None or all_teams.empty:
+            return None
         team_data = all_teams[all_teams['Team'] == pybaseball_abbr]
         
         if team_data.empty:
@@ -945,7 +994,9 @@ def get_team_averages(team_abbr):
 
 def get_league_pitcher_averages():
     try:
-        all_teams = team_pitching(2025)
+        all_teams = get_cached_team_pitching(2025)
+        if all_teams is None or all_teams.empty:
+            return None
         return {
             'ERA': all_teams['ERA'].mean(),
             'WHIP': all_teams['WHIP'].mean(),
@@ -965,7 +1016,9 @@ def get_team_pitcher_averages(team_abbr):
         
         pybaseball_abbr = TEAM_ABBR_MAP.get(team_abbr, team_abbr)
         
-        all_teams = team_pitching(2025)
+        all_teams = get_cached_team_pitching(2025)
+        if all_teams is None or all_teams.empty:
+            return None
         team_data = all_teams[all_teams['Team'] == pybaseball_abbr]
         
         if team_data.empty:
