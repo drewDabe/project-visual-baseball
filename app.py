@@ -1355,10 +1355,6 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
     [State('player-table', 'data')]
 )
 def update_comparative_analysis(selected_rows, player_type, table_data):
-    # TEMPORARILY DISABLED FOR TESTING
-    empty_msg = html.P("Comparative analysis temporarily disabled for testing", className="text-center text-muted")
-    return empty_msg, empty_msg, empty_msg, {'display': 'none'}, {'display': 'block'}, "Comparative Analysis (Disabled)"
-    
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
         return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
