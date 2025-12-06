@@ -1097,7 +1097,6 @@ def get_player_monthly_stats(player_name, team_abbr, position, month):
         return None
 
 def get_cached_monthly_stats(player_id, year=2025):
-    """Load player bi-monthly stats from cache"""
     cache_dir = Path('cache')
     cache_file = cache_dir / f'player_{player_id}_{year}_monthly.pkl'
     
@@ -1424,11 +1423,11 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
 def update_comparative_analysis(selected_rows, table_data, player_type):
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
     
     if selected_rows[0] >= len(table_data):
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
     
     selected_row = table_data[selected_rows[0]]
     player_name = selected_row['Name']
@@ -1529,19 +1528,19 @@ def update_comparative_analysis(selected_rows, table_data, player_type):
         ], style={'backgroundColor': '#2d2d2d'})
         
         empty_msg = html.P("Bi-monthly splits not available for pitchers", className="text-center text-muted")
-        return pitcher_comparison, html.Div(), empty_msg, f"Pitcher Analysis - {player_name}", 0
+        return pitcher_comparison, html.Div(), empty_msg, {'display': 'none'}, {'display': 'block'}, f"Pitcher Analysis - {player_name}"
     
     if player_type != 'hitters':
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
     
     if not PYBASEBALL_AVAILABLE:
         error_msg = html.P("PyBaseball not available", className="text-center text-muted")
-        return error_msg, error_msg, error_msg, "Comparative Analysis", 0
+        return error_msg, error_msg, error_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
     
     if selected_rows[0] >= len(table_data):
         empty_msg = html.P("Select a hitter to view comparisons", className="text-center text-muted")
-        return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
+        return empty_msg, empty_msg, empty_msg, {'display': 'block'}, {'display': 'none'}, "Comparative Analysis"
     
     selected_row = table_data[selected_rows[0]]
     player_name = selected_row['Name']
@@ -1592,7 +1591,8 @@ def update_comparative_analysis(selected_rows, table_data, player_type):
     ], style={'backgroundColor': '#2d2d2d'})
     
     return (comparison_table, html.Div(), splits_table, 
-            f"Comparative Analysis - {player_name}", 0)
+            {'display': 'none'}, {'display': 'block'}, 
+            f"Comparative Analysis - {player_name}")
 
 server = app.server
 
