@@ -1576,19 +1576,21 @@ def update_comparative_analysis(selected_rows, table_data, player_type):
     player_id = selected_row.get('ID')
     periods_data = get_cached_monthly_stats(player_id, 2025)
     
-    # If no cache available, create empty stats
-    if not periods_data:
-        periods_data = {
-            'Apr + May': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']},
-            'Jun + Jul': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']},
-            'Aug + Sep': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']}
-        }
-    
-    splits_table = dbc.Card([
-        dbc.CardBody([
-            create_bimonthly_splits_table(periods_data)
-        ], style={'padding': '0.75rem'})
-    ], style={'backgroundColor': '#2d2d2d'})
+    # If no cache available, show a message instead
+    if not periods_data or all(all(v is None for v in period.values()) for period in periods_data.values()):
+        splits_table = dbc.Card([
+            dbc.CardBody([
+                html.P("Bi-monthly splits data not available", 
+                      className="text-center text-muted", 
+                      style={'padding': '2rem'})
+            ], style={'padding': '0.75rem'})
+        ], style={'backgroundColor': '#2d2d2d'})
+    else:
+        splits_table = dbc.Card([
+            dbc.CardBody([
+                create_bimonthly_splits_table(periods_data)
+            ], style={'padding': '0.75rem'})
+        ], style={'backgroundColor': '#2d2d2d'})
     
     return (comparison_table, html.Div(), splits_table, 
             {'display': 'none'}, {'display': 'block'}, 
