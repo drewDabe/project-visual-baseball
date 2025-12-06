@@ -899,34 +899,10 @@ app.layout = dbc.Container([
     ], className="mb-4")
 ], fluid=True, style={'backgroundColor': '#1a1a1a', 'minHeight': '100vh', 'padding': '20px'})
 
-# cache team stats at startup to avoid slow API calls
-_team_batting_cache = None
-_team_pitching_cache = None
-
-def _get_team_batting_data():
-    global _team_batting_cache
-    if _team_batting_cache is None:
-        try:
-            _team_batting_cache = team_batting(2025, stat_columns=STAT_COLS)
-        except:
-            _team_batting_cache = pd.DataFrame()
-    return _team_batting_cache
-
-def _get_team_pitching_data():
-    global _team_pitching_cache
-    if _team_pitching_cache is None:
-        try:
-            _team_pitching_cache = team_pitching(2025)
-        except:
-            _team_pitching_cache = pd.DataFrame()
-    return _team_pitching_cache
-
 def get_league_averages():
     # Calculate league averages from all teams
     try:
-        all_teams = _get_team_batting_data()
-        if all_teams.empty:
-            return None
+        all_teams = team_batting(2025, stat_columns=STAT_COLS)
         return {
             'AVG': all_teams['AVG'].mean(),
             'OPS': all_teams['OPS'].mean(),
@@ -948,9 +924,7 @@ def get_team_averages(team_abbr):
         
         pybaseball_abbr = TEAM_ABBR_MAP.get(team_abbr, team_abbr)
         
-        all_teams = _get_team_batting_data()
-        if all_teams.empty:
-            return None
+        all_teams = team_batting(2025, stat_columns=STAT_COLS)
         team_data = all_teams[all_teams['Team'] == pybaseball_abbr]
         
         if team_data.empty:
@@ -971,9 +945,7 @@ def get_team_averages(team_abbr):
 
 def get_league_pitcher_averages():
     try:
-        all_teams = _get_team_pitching_data()
-        if all_teams.empty:
-            return None
+        all_teams = team_pitching(2025)
         return {
             'ERA': all_teams['ERA'].mean(),
             'WHIP': all_teams['WHIP'].mean(),
@@ -993,9 +965,7 @@ def get_team_pitcher_averages(team_abbr):
         
         pybaseball_abbr = TEAM_ABBR_MAP.get(team_abbr, team_abbr)
         
-        all_teams = _get_team_pitching_data()
-        if all_teams.empty:
-            return None
+        all_teams = team_pitching(2025)
         team_data = all_teams[all_teams['Team'] == pybaseball_abbr]
         
         if team_data.empty:
@@ -1259,8 +1229,7 @@ def update_pitch_selector(selected_rows, player_type, table_data, current_value)
      Input('player-type-radio', 'value'),
      Input('hit-type-checklist', 'value'),
      Input('pitch-range-selector', 'value')],
-    [State('player-table', 'data')],
-    priority=0
+    [State('player-table', 'data')]
 )
 def update_visualization(selected_rows, player_type, hit_types, pitch_range_start, table_data):
     if not selected_rows or not table_data:
@@ -1383,10 +1352,13 @@ def update_visualization(selected_rows, player_type, hit_types, pitch_range_star
      Output('comparison-title', 'children')],
     [Input('player-table', 'selected_rows'),
      Input('player-type-radio', 'value')],
-    [State('player-table', 'data')],
-    priority=1
+    [State('player-table', 'data')]
 )
 def update_comparative_analysis(selected_rows, player_type, table_data):
+    # TEMPORARILY DISABLED FOR TESTING
+    empty_msg = html.P("Comparative analysis temporarily disabled for testing", className="text-center text-muted")
+    return empty_msg, empty_msg, empty_msg, {'display': 'none'}, {'display': 'block'}, "Comparative Analysis (Disabled)"
+    
     if not selected_rows or not table_data:
         empty_msg = html.P("Select a player to view analysis", className="text-center text-muted")
         return empty_msg, empty_msg, empty_msg, "Comparative Analysis", 0
