@@ -115,7 +115,7 @@ def get_cached_team_batting(year=2025):
     if PYBASEBALL_AVAILABLE:
         try:
             print(f"Fetching team batting data from API...")
-            return team_batting(year)
+            return team_batting(year, stat_columns=['AVG', 'OPS', 'SLG', 'OBP', 'wOBA', 'HR'])
         except Exception as e:
             print(f"Error fetching team batting: {e}")
     
@@ -137,7 +137,7 @@ def get_cached_team_pitching(year=2025):
     if PYBASEBALL_AVAILABLE:
         try:
             print(f"Fetching team pitching data from API...")
-            return team_pitching(year)
+            return team_pitching(year, stat_columns=['ERA', 'WHIP', 'SO', 'BB', 'IP'])
         except Exception as e:
             print(f"Error fetching team pitching: {e}")
     
@@ -1096,6 +1096,20 @@ def get_player_monthly_stats(player_name, team_abbr, position, month):
         print(f"Error fetching monthly stats for {player_name}, month {month}: {e}")
         return None
 
+def get_cached_monthly_stats(player_id, year=2025):
+    """Load player bi-monthly stats from cache"""
+    cache_dir = Path('cache')
+    cache_file = cache_dir / f'player_{player_id}_{year}_monthly.pkl'
+    
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'rb') as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Error loading monthly cache for player {player_id}: {e}")
+    
+    return None
+
 def format_stat_with_diff(value, comparison, stat_name, show_diff_on_comparison=True):
     if value is None or comparison is None or pd.isna(value) or pd.isna(comparison):
         return html.Span("--")
@@ -1559,41 +1573,17 @@ def update_comparative_analysis(selected_rows, table_data, player_type):
         ], style={'padding': '0.75rem'})
     ], style={'backgroundColor': '#2d2d2d'})
     
-    # you know what, bi-monthly splits maybe worth it
-    periods = {
-        'Apr + May': ['4', '5'],
-        'Jun + Jul': ['6', '7'],
-        'Aug + Sep': ['8', '9']
-    }
+    # Load bi-monthly splits from cache
+    player_id = selected_row.get('ID')
+    periods_data = get_cached_monthly_stats(player_id, 2025)
     
-    periods_data = {}
-    for period_name, months in periods.items():
-        period_stats_list = []
-        for month in months:
-            month_stats = get_player_monthly_stats(player_name, team, position, month)
-            if month_stats:
-                period_stats_list.append(month_stats)
-        
-        if period_stats_list:
-            def safe_avg(stat_name):
-                values = [s[stat_name] for s in period_stats_list if s.get(stat_name) is not None]
-                return sum(values) / len(values) if values else None
-            
-            def safe_sum(stat_name):
-                values = [s[stat_name] for s in period_stats_list if s.get(stat_name) is not None]
-                return sum(values) if values else None
-            
-            period_stats = {
-                'AVG': safe_avg('AVG'),
-                'SLG': safe_avg('SLG'),
-                'OBP': safe_avg('OBP'),
-                'wOBA': safe_avg('wOBA'),
-                'HR': safe_sum('HR')
-            }
-        else:
-            period_stats = {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']}
-        
-        periods_data[period_name] = period_stats
+    # If no cache available, create empty stats
+    if not periods_data:
+        periods_data = {
+            'Apr + May': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']},
+            'Jun + Jul': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']},
+            'Aug + Sep': {k: None for k in ['AVG', 'SLG', 'OBP', 'wOBA', 'HR']}
+        }
     
     splits_table = dbc.Card([
         dbc.CardBody([
